@@ -174,19 +174,20 @@ exports.handler = async (event) => {
 
       // Leer headers para conocer el ancho de la fila
       const rows    = await readSheet(token, driveId, itemId, sheetName);
-      const nCols   = (rows[0] || []).length;
-      const nextRow = nextRowFromRows(rows, 0);
+      const nCols   = Math.max((rows[0] || []).length, 10);
+      const nextRow = nextRowFromRows(rows, 1); // col B = Mes (col A vacía)
 
       const rowData = Array(nCols).fill('');
-      rowData[0] = mes;
-      rowData[1] = excelFecha;
-      rowData[2] = localidad;
-      rowData[3] = campo;
-      rowData[4] = remito || '';
-      rowData[5] = patente;
-      rowData[6] = brutoNum;
-      rowData[7] = taraNum;
-      rowData[8] = neto;
+      // col A (índice 0) se deja vacía; datos desde col B (índice 1)
+      rowData[1] = mes;
+      rowData[2] = excelFecha;
+      rowData[3] = localidad;
+      rowData[4] = campo;
+      rowData[5] = remito || '';
+      rowData[6] = patente;
+      rowData[7] = brutoNum;
+      rowData[8] = taraNum;
+      rowData[9] = neto;
 
       const addr = `A${nextRow}:${colLetter(nCols)}${nextRow}`;
 
@@ -211,19 +212,20 @@ exports.handler = async (event) => {
       if (!lote) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'El lote es obligatorio.' }) };
 
       const rows    = await readSheet(token, driveId, itemId, sheetName);
-      const nCols   = (rows[0] || []).length;
-      const nextRow = nextRowFromRows(rows, 0);
+      const nCols   = Math.max((rows[0] || []).length, 10);
+      const nextRow = nextRowFromRows(rows, 1); // col B = Mes (col A vacía)
 
       const rowData = Array(nCols).fill('');
-      rowData[0] = mes;
-      rowData[1] = excelFecha;
-      rowData[2] = localidad;
-      rowData[3] = campo;
-      rowData[4] = lote;
-      rowData[5] = nv;
-      rowData[6] = ct;
-      rowData[7] = cm3;
-      rowData[8] = campana || '';
+      // col A (índice 0) se deja vacía; datos desde col B (índice 1)
+      rowData[1] = mes;
+      rowData[2] = excelFecha;
+      rowData[3] = localidad;
+      rowData[4] = campo;
+      rowData[5] = lote;
+      rowData[6] = nv;
+      rowData[7] = ct;
+      rowData[8] = cm3;
+      rowData[9] = campana || '';
 
       const addr = `A${nextRow}:${colLetter(nCols)}${nextRow}`;
 

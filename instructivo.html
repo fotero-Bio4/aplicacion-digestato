@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instructivo — Sistema de Carga Digestato BIO4</title>
+  <style>
+    :root {
+      --brand:      #5aaa18;
+      --brand-dark: #3d6e28;
+      --gold:       #c8961a;
+      --navy:       #1a2b4a;
+      --bg:         #f2f5f2;
+      --card:       #ffffff;
+      --text:       #1a2b1a;
+      --muted:      #637063;
+      --border:     #d0ddd0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      background: var(--brand-dark);
+      color: #fff;
+      padding: 18px 24px 0;
+    }
+    .site-header-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-bottom: 18px;
+    }
+    .logo {
+      width: 46px; height: 46px;
+      background: var(--brand);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .site-header h1 { font-size: 18px; font-weight: 700; line-height: 1.2; }
+    .site-header p  { font-size: 12px; opacity: .75; margin-top: 3px; }
+
+    /* ── Step nav ── */
+    .step-nav {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .sn-item {
+      display: flex; align-items: center; gap: 5px;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      border: 1.5px solid transparent;
+      transition: all .2s;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .sn-item:hover { color: var(--brand); border-color: var(--border); }
+    .sn-item.active { background: var(--brand); color: #fff; }
+    .sn-item.done   { color: var(--brand-dark); border-color: var(--brand); }
+    .sn-num {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: currentColor;
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    .sn-item.active .sn-num { background: rgba(255,255,255,.3); }
+    .sn-item.done   .sn-num { background: var(--brand); color: #fff; }
+
+    /* ── Slide ── */
+    .main { max-width: 820px; margin: 0 auto; padding: 24px 16px 40px; }
+
+    .slide { display: none; }
+    .slide.active {
+      display: block;
+      animation: fadeUp .28s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-header { margin-bottom: 20px; }
+    .slide-step   { font-size: 11px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: .6px; }
+    .slide-title  { font-size: 23px; font-weight: 800; color: var(--navy); margin-top: 4px; line-height: 1.2; }
+    .slide-desc   { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; }
+
+    /* ── Layout: side by side on wide screens ── */
+    .content-row {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .content-notes { flex: 1; min-width: 0; }
+    .content-mock  { flex: 0 0 260px; }
+    @media (max-width: 620px) {
+      .content-row { flex-direction: column; }
+      .content-mock { flex: none; width: 100%; }
+    }
+
+    /* ── Phone mockup ── */
+    .phone-wrap {
+      background: #e8ede8;
+      border-radius: 18px;
+      padding: 12px 10px;
+      border: 1.5px solid var(--border);
+    }
+    .phone {
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(0,0,0,.12);
+    }
+    .ph-bar {
+      background: var(--brand-dark);
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ph-badge {
+      font-size: 10px;
+      background: rgba(255,255,255,.2);
+      border-radius: 8px;
+      padding: 2px 7px;
+    }
+    .ph-body { padding: 14px 12px; }
+
+    /* Fields inside mockup */
+    .mf-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 3px;
+    }
+    .mf-input {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 9px;
+      display: flex;
+      align-items: center;
+    }
+    .mf-input.filled {
+      background: #edf7e6;
+      border-color: var(--brand);
+      color: var(--text);
+      font-weight: 500;
+    }
+    .mf-input.calc {
+      background: #e8f4fd;
+      border-color: #4a90d9;
+      color: var(--navy);
+      font-weight: 700;
+    }
+    .mf-input.locked {
+      background: #f5f5f5;
+      border-color: #ddd;
+      color: #aaa;
+      font-style: italic;
+    }
+    .mf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mf-btn {
+      background: var(--brand);
+      color: #fff;
+      border-radius: 10px;
+      padding: 11px 10px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .mf-btn-sec {
+      color: var(--brand);
+      border: 1.5px solid var(--brand);
+      border-radius: 10px;
+      padding: 9px 10px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+    .tipo-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .tipo-card {
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .tipo-card.on { border-color: var(--brand); background: #edf7e6; }
+    .tipo-card .ico { font-size: 26px; margin-bottom: 4px; }
+    .tipo-card .nm  { font-size: 12px; font-weight: 700; color: var(--navy); }
+
+    .confirm-box { text-align: center; padding: 20px 10px; }
+    .confirm-check {
+      width: 56px; height: 56px;
+      background: var(--brand);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; color: #fff;
+      margin: 0 auto 12px;
+    }
+    .confirm-title { font-size: 16px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+    .confirm-sub   { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.4; }
+
+    /* ── Notes / callouts ── */
+    .callout {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px 14px;
+      border-left: 3.5px solid var(--brand);
+      margin-bottom: 10px;
+    }
+    .callout.warn  { border-left-color: var(--gold); }
+    .callout.info  { border-left-color: #4a90d9; }
+    .callout-ico   { font-size: 20px; line-height: 1; flex-shrink: 0; padding-top: 1px; }
+    .callout-body strong { display: block; font-size: 13px; color: var(--navy); margin-bottom: 2px; }
+    .callout-body span   { font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+    .tip-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .tip {
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .tip .t-ico { font-size: 26px; margin-bottom: 6px; }
+    .tip h4 { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+    .tip p  { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+    /* ── Nav buttons ── */
+    .nav-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 22px;
+    }
+    .btn-prev {
+      padding: 11px 20px;
+      background: #fff;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .btn-prev:hover:not(:disabled) { border-color: var(--brand); color: var(--brand); }
+    .btn-prev:disabled { opacity: .3; cursor: default; }
+    .btn-next {
+      flex: 1;
+      padding: 12px 20px;
+      background: var(--brand);
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-next:hover { background: var(--brand-dark); }
+    .btn-next.end   { background: var(--navy); }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 20px 16px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-row">
+    <div class="logo">B4</div>
+    <div>
+      <h1>Sistema de Carga Digestato</h1>
+      <p>Instructivo de uso para contratistas — BIO4</p>
+    </div>
+  </div>
+</header>
+
+<nav class="step-nav" id="stepNav"></nav>
+
+<main class="main">
+
+  <!-- ═══ PASO 1: Acceso ═══ -->
+  <div class="slide active" id="slide-0">
+    <div class="slide-header">
+      <div class="slide-step">Paso 1 de 6</div>
+      <div class="slide-title">Acceso al sistema</div>
+      <div class="slide-desc">Abrí el formulario desde cualquier dispositivo con internet. No necesitás instalar nada.</div>
+    </div>
+
+    <div class="tip-row">
+      <div class="tip">
+        <div class="t-ico">📱</div>
+        <h4>Celular o PC</h4>
+        <p>Funciona en el navegador del celular, tablet o computadora.</p>
+      </div>
+      <div class="tip">
+        <div class="t-ico">📶</div>
+        <h4>Necesitás conexión</h4>
+        <p>Los datos se graban en tiempo real en la planilla de BIO4.</p>
+      </div>
+      <div class="tip">
+        <div class="t-ico">🌐</div>
+        <h4>Cualquier navegador</h4>
+        <p>Chrome, Safari, Firefox o Edge. Todos funcionan.</p>
+      </div>
+      <div class="tip">
+        <div class="t-ico">🔐</div>
+        <h4>Acceso protegido</h4>
+        <p>Requiere usuario y contraseña asignados por BIO4.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-ico">🔗</div>
+      <div class="callout-body">
+        <strong>¿Dónde entro?</strong>
+        <span>Tu supervisor te proporcionará el enlace al sistema. Guardalo en favoritos del celular para acceder rápido la próxima vez.</span>
+      </div>
+    </div>
+    <div class="callout info">
+      <div class="callout-ico">📡</div>
+      <div class="callout-body">
+        <strong>Sin señal en el campo</strong>
+        <span>Si no tenés conexión en el momento, anotá los datos del viaje y cargalos en cuanto recuperes señal.</span>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-prev" disabled>← Anterior</button>
+      <button class="btn-next" onclick="go(1)">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══ PASO 2: Login ═══ -->
+  <div class="slide" id="slide-1">
+    <div class="slide-header">
+      <div class="slide-step">Paso 2 de 6</div>
+      <div class="slide-title">Inicio de sesión</div>
+      <div class="slide-desc">Ingresá el usuario y la contraseña que te asignó BIO4.</div>
+    </div>
+
+    <div class="content-row">
+      <div class="content-mock">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="ph-bar">🌱 Digestato BIO4</div>
+            <div class="ph-body">
+              <div style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;text-align:center">Ingresar al sistema</div>
+              <div class="mf-label">Usuario</div>
+              <div class="mf-input filled">PALACIO</div>
+              <div class="mf-label">Contraseña</div>
+              <div class="mf-input filled">••••</div>
+              <div class="mf-btn">Ingresar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-notes">
+        <div class="callout">
+          <div class="callout-ico">👤</div>
+          <div class="callout-body">
+            <strong>Usuario</strong>
+            <span>Es el nombre de tu empresa, tal como te lo indicó BIO4 (ej: <em>PALACIO</em>, <em>GALLO</em>, <em>SANCHEZ</em>). Generalmente en mayúsculas.</span>
+          </div>
+        </div>
+        <div class="callout">
+          <div class="callout-ico">🔑</div>
+          <div class="callout-body">
+            <strong>Contraseña</strong>
+            <span>La contraseña es la que BIO4 te asignó al darte el acceso.</span>
+          </div>
+        </div>
+        <div class="callout warn">
+          <div class="callout-ico">⚠️</div>
+          <div class="callout-body">
+            <strong>¿Error de credenciales?</strong>
+            <span>Verificá que no tengas el bloq mayús activado. Si el problema persiste, contactá a BIO4 para que restablezcan tu contraseña.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-prev" onclick="go(0)">← Anterior</button>
+      <button class="btn-next" onclick="go(2)">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══ PASO 3: Selección de tipo ═══ -->
+  <div class="slide" id="slide-2">
+    <div class="slide-header">
+      <div class="slide-step">Paso 3 de 6</div>
+      <div class="slide-title">¿Qué querés registrar?</div>
+      <div class="slide-desc">Si tu empresa trabaja con los dos servicios, el sistema te pregunta qué tipo de viaje querés cargar.</div>
+    </div>
+
+    <div class="content-row">
+      <div class="content-mock">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="ph-bar">🌱 Digestato BIO4 <span class="ph-badge">PALACIO</span></div>
+            <div class="ph-body">
+              <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px;text-align:center">Seleccioná el tipo de carga</div>
+              <div class="tipo-grid">
+                <div class="tipo-card on">
+                  <div class="ico">🚛</div>
+                  <div class="nm">Camiones</div>
+                </div>
+                <div class="tipo-card">
+                  <div class="ico">🌾</div>
+                  <div class="nm">Estercolero</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-notes">
+        <div class="callout info">
+          <div class="callout-ico">ℹ️</div>
+          <div class="callout-body">
+            <strong>Esta pantalla aparece solo si tenés ambos permisos</strong>
+            <span>Si tu empresa solo opera camiones, vas directo al formulario de camiones. Si solo estercolero, vas al formulario de estercolero.</span>
+          </div>
+        </div>
+        <div class="callout">
+          <div class="callout-ico">🔁</div>
+          <div class="callout-body">
+            <strong>Podés cargar los dos en la misma sesión</strong>
+            <span>Después de confirmar un viaje, el sistema te devuelve a esta pantalla para registrar otro del tipo que quieras.</span>
+          </div>
+        </div>
+        <div class="callout">
+          <div class="callout-ico">🚛</div>
+          <div class="callout-body">
+            <strong>Camiones</strong>
+            <span>Registra un viaje de transporte de digestato: fecha, patente, localidad, campo, pesos.</span>
+          </div>
+        </div>
+        <div class="callout">
+          <div class="callout-ico">🌾</div>
+          <div class="callout-body">
+            <strong>Estercolero</strong>
+            <span>Registra una aplicación de digestato en campo: fecha, localidad, campo, lote, viajes y m³.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-prev" onclick="go(1)">← Anterior</button>
+      <button class="btn-next" onclick="go(3)">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══ PASO 4: Camiones ═══ -->
+  <div class="slide" id="slide-3">
+    <div class="slide-header">
+      <div class="slide-step">Paso 4 de 6</div>
+      <div class="slide-title">Formulario de Camiones</div>
+      <div class="slide-desc">Completá los datos del viaje. Todos los campos son obligatorios salvo el Remito.</div>
+    </div>
+
+    <div class="content-row">
+      <div class="content-mock">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="ph-bar">🚛 Registro — Camiones</div>
+            <div class="ph-body">
+              <div class="mf-label">Fecha del viaje</div>
+              <div class="mf-input filled">12/06/2026</div>
+
+              <div class="mf-label">Patente</div>
+              <div class="mf-input filled">ABC 123</div>
+
+              <div class="mf-label">Localidad</div>
+              <div class="mf-input filled">SAMPACHO</div>
+
+              <div class="mf-label">Campo</div>
+              <div class="mf-input filled">LA ESPERANZA</div>
+
+              <div class="mf-label">Remito N° (opcional)</div>
+              <div class="mf-input" style="color:#aaa">— sin remito —</div>
+
+              <div class="mf-row">
+                <div>
+                  <div class="mf-label">Bruto (kg)</div>
+                  <div class="mf-input filled">32500</div>
+                </div>
+                <div>
+                  <div class="mf-label">Tara (kg)</div>
+                  <div class="mf-input filled">14200</div>
+                </div>
+              </div>
+
+              <div class="mf-label">Neto (kg)</div>
+              <div class="mf-input calc">18.300 ← auto</div>
+
+              <div class="mf-btn">Registrar viaje</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-notes">
+        <div class="callout">
+          <div class="callout-ico">📅</div>
+          <div class="callout-body">
+            <strong>Fecha</strong>
+            <span>Se pre-carga con la fecha de hoy. Podés cambiarla si el viaje fue en otro día.</span>
+          </div>
+        </div>
+        <div class="callout">
+          <div class="callout-ico">🚗</div>
+          <div class="callout-body">
+            <strong>Patente</strong>
+            <span>El sistema muestra solo las patentes registradas para tu empresa. Si falta una patente, avisá a BIO4.</span>
+          </div>
+        </div>
+        <div class="callout">
+          <div class="callout-ico">📍</div>
+          <div class="callout-body">
+            <strong>Localidad → Campo en cascada</strong>
+            <span>Primero elegí la localidad; la lista de campos se actualiza automáticamente. Si el campo está en gris, primero seleccioná la localidad.</span>
+          </div>
+        </div>
+        <div class="callout info">
+          <div class="callout-ico">🔢</div>
+          <div class="callout-body">
+            <strong>El Neto se calcula solo</strong>
+            <span>Al completar Bruto y Tara, el campo Neto (Bruto − Tara) se actualiza automáticamente. No podés modificarlo a mano.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-prev" onclick="go(2)">← Anterior</button>
+      <button class="btn-next" onclick="go(4)">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══ PASO 5: Estercolero ═══ -->
+  <div class="slide" id="slide-4">
+    <div class="slide-header">
+      <div class="slide-step">Paso 5 de 6</div>
+      <div class="slide-title">Formulario de Estercolero</div>
+      <div class="slide-desc">Registrá la aplicación de digestato en el campo. Todos los campos son obligatorios salvo Campaña.</div>
+    </div>
+
+    <div class="content-row">
+      <div class="content-mock">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="ph-bar">🌾 Registro — Estercolero</div>
+            <div class="ph-body">
+              <div class="mf-label">Fecha</div>
+              <div class="mf-input filled">12/06/2026</div>
+
+              <div class="mf-label">Localidad</div>
+              <div class="mf-input filled">SAMPACHO</div>
+
+              <div class="mf-label">Campo</div>
+              <div class="mf-input filled">LA ESPERANZA</div>
+
+              <div class="mf-label">Lote</div>
+              <div class="mf-input filled">LOTE 3</div>
+
+              <div class="mf-row">
+                <div>
+                  <div class="mf-label">N° viajes</div>
+                  <div class="mf-input filled">8</div>
+                </div>
+                <div>
+                  <div class="mf-label">Cap. tanque (m³)</div>
+                  <div class="mf-input filled">12</div>
+                </div>
+              </div>
+
+              <div class="mf-label">Cantidad m³</div>
+              <div class="mf-input calc">96 ← auto</div>
+
+              <div class="mf-label">Campaña (opcional)</div>
+              <div class="mf-input" style="color:#aaa">2025/26</div>
+
+              <div class="mf-btn">Registrar viaje</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-notes">
+        <div class="callout">
+          <div class="callout-ico">📍</div>
+          <div class="callout-body">
+            <strong>Localidad → Campo → Lote en cascada</strong>
+            <span>Seleccioná primero la localidad, luego el campo, y finalmente el lote. Cada lista se habilita cuando elegís la anterior.</span>
+          </div>
+        </div>
+        <div class="callout info">
+          <div class="callout-ico">🧮</div>
+          <div class="callout-body">
+            <strong>Los m³ se calculan solos</strong>
+            <span>Al ingresar N° de viajes y capacidad del tanque, el total de m³ (viajes × cap.) se actualiza automáticamente.</span>
+          </div>
+        </div>
+        <div class="callout">
+          <div class="callout-ico">🌾</div>
+          <div class="callout-body">
+            <strong>Campaña</strong>
+            <span>Campo opcional. Si lo completás, usá el formato <em>2025/26</em>. Si no aplica, dejalo vacío.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-prev" onclick="go(3)">← Anterior</button>
+      <button class="btn-next" onclick="go(5)">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══ PASO 6: Confirmación ═══ -->
+  <div class="slide" id="slide-5">
+    <div class="slide-header">
+      <div class="slide-step">Paso 6 de 6</div>
+      <div class="slide-title">Confirmación del registro</div>
+      <div class="slide-desc">Si el envío fue exitoso, el sistema muestra la pantalla verde de confirmación. El dato ya está en la planilla de BIO4.</div>
+    </div>
+
+    <div class="content-row">
+      <div class="content-mock">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="ph-bar">🌱 Digestato BIO4</div>
+            <div class="ph-body">
+              <div class="confirm-box">
+                <div class="confirm-check">✓</div>
+                <div class="confirm-title">¡Viaje registrado!</div>
+                <div class="confirm-sub">El dato fue guardado correctamente en el sistema de BIO4.</div>
+                <div class="mf-btn">Registrar otro viaje</div>
+                <div style="height:8px"></div>
+                <div class="mf-btn-sec">Cerrar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-notes">
+        <div class="callout">
+          <div class="callout-ico">✅</div>
+          <div class="callout-body">
+            <strong>El dato queda grabado al instante</strong>
+            <span>No es necesario hacer nada más. BIO4 lo visualiza automáticamente en la planilla.</span>
+          </div>
+        </div>
+        <div class="callout">
+          <div class="callout-ico">🔁</div>
+          <div class="callout-body">
+            <strong>Registrar otro viaje</strong>
+            <span>Tocá el botón verde para volver al formulario. Si tenés los dos permisos, te vuelve a la selección de tipo.</span>
+          </div>
+        </div>
+        <div class="callout warn">
+          <div class="callout-ico">🔴</div>
+          <div class="callout-body">
+            <strong>Si aparece un mensaje de error</strong>
+            <span>Anotá los datos del viaje y contactá a BIO4 para que lo carguen manualmente. Tomale una captura de pantalla al error para facilitarles el diagnóstico.</span>
+          </div>
+        </div>
+        <div class="callout warn">
+          <div class="callout-ico">📞</div>
+          <div class="callout-body">
+            <strong>Contacto ante problemas</strong>
+            <span>Comunicarse con el área de Sistemas de BIO4 ante cualquier inconveniente con el sistema.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-prev" onclick="go(4)">← Anterior</button>
+      <button class="btn-next class end" onclick="go(0)">↩ Ver desde el inicio</button>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  Sistema de Carga Digestato — BIO4 &nbsp;·&nbsp; 2026<br>
+  <span style="font-size:11px">Para consultas o problemas de acceso, contactar al área de Sistemas.</span>
+</footer>
+
+<script>
+  const STEPS = ['Acceso', 'Login', 'Tipo', 'Camiones', 'Estercolero', 'Confirmar'];
+  const TOTAL = STEPS.length;
+  let cur = 0;
+
+  function renderNav() {
+    const nav = document.getElementById('stepNav');
+    nav.innerHTML = '';
+    STEPS.forEach((label, i) => {
+      const el = document.createElement('div');
+      el.className = 'sn-item' + (i === cur ? ' active' : i < cur ? ' done' : '');
+      el.title = label;
+      el.onclick = () => go(i);
+
+      const num = document.createElement('div');
+      num.className = 'sn-num';
+      num.textContent = i < cur ? '✓' : (i + 1);
+      el.appendChild(num);
+
+      const txt = document.createTextNode(' ' + label);
+      el.appendChild(txt);
+      nav.appendChild(el);
+    });
+  }
+
+  function go(n) {
+    if (n < 0 || n >= TOTAL) return;
+    document.getElementById('slide-' + cur).classList.remove('active');
+    cur = n;
+    document.getElementById('slide-' + cur).classList.add('active');
+    renderNav();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  renderNav();
+</script>
+</body>
+</html>

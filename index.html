@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>BIO4 — Carga Digestato</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-logo">
+      <img src="img/logo-white.png" alt="BIO4" class="logo-img">
+      <span class="logo-sub">Digestato</span>
+    </div>
+    <div id="headerBadge" class="header-badge">Formulario de Carga</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── PANTALLA: Login ──────────────────────────────────────────────── -->
+  <div id="screenLogin" class="login-wrap">
+    <div class="card">
+      <div class="login-icon">🌿</div>
+      <div class="login-title">Acceso Contratistas</div>
+      <div class="login-sub">Ingresá tus credenciales para acceder al formulario de carga.</div>
+
+      <div class="field">
+        <label for="inputUsuario">Usuario <span class="req">*</span></label>
+        <input id="inputUsuario" type="text" placeholder="Tu usuario" autocomplete="username" autocapitalize="off">
+      </div>
+      <div class="field">
+        <label for="inputPss">Contraseña <span class="req">*</span></label>
+        <input id="inputPss" type="password" placeholder="Tu contraseña" autocomplete="current-password">
+      </div>
+
+      <div class="submit-area">
+        <button id="btnLogin" class="btn-submit">Ingresar</button>
+      </div>
+      <div id="msgLogin" class="msg hidden"></div>
+    </div>
+  </div>
+
+  <!-- ── PANTALLA: Selección de tipo (solo si tiene ambos permisos) ─── -->
+  <div id="screenTipo" class="hidden">
+    <div class="card">
+      <h2>¿Qué tipo de carga querés registrar?</h2>
+      <p class="hint">Seleccioná el formulario correspondiente a tu carga de hoy.</p>
+      <div class="tipo-grid" id="tipoGrid">
+        <label class="tipo-btn" id="btnTipoCamiones">
+          <input type="radio" name="tipo" value="camiones">
+          <div class="tipo-inner">
+            <span class="tipo-icon">🚛</span>
+            <span class="tipo-title">Camiones</span>
+            <span class="tipo-desc">Registro de viajes con remito, patente y pesaje.</span>
+          </div>
+        </label>
+        <label class="tipo-btn" id="btnTipoEstercolero">
+          <input type="radio" name="tipo" value="estercolero">
+          <div class="tipo-inner">
+            <span class="tipo-icon">🌱</span>
+            <span class="tipo-title">Estercolero</span>
+            <span class="tipo-desc">Registro de viajes de digestato líquido por lote.</span>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PANTALLA: Formulario Camiones ──────────────────────────────── -->
+  <div id="screenCamiones" class="hidden">
+    <div class="card">
+      <h2>🚛 Carga de Camiones</h2>
+      <p class="hint" id="hintCamiones">Completá los datos del viaje. Los campos con <span style="color:var(--red)">*</span> son obligatorios.</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="cam_fecha">Fecha <span class="req">*</span></label>
+          <input id="cam_fecha" type="date">
+        </div>
+        <div class="field">
+          <label for="cam_patente">Patente <span class="req">*</span></label>
+          <select id="cam_patente">
+            <option value="">— Seleccioná patente —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="cam_localidad">Localidad <span class="req">*</span></label>
+          <select id="cam_localidad">
+            <option value="">— Seleccioná localidad —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cam_campo">Campo <span class="req">*</span></label>
+          <select id="cam_campo" disabled>
+            <option value="">— Primero elegí localidad —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="cam_remito">Remito N°</label>
+        <input id="cam_remito" type="text" placeholder="Ej: 0000-00000150">
+      </div>
+
+      <div class="section-divider"><span>Pesaje</span></div>
+
+      <div class="field-row-3">
+        <div class="field">
+          <label for="cam_bruto">Bruto (kg) <span class="req">*</span></label>
+          <input id="cam_bruto" type="number" min="0" step="1" placeholder="50000">
+        </div>
+        <div class="field">
+          <label for="cam_tara">Tara (kg) <span class="req">*</span></label>
+          <input id="cam_tara" type="number" min="0" step="1" placeholder="15000">
+        </div>
+        <div class="field field-calc">
+          <label>Neto (kg)</label>
+          <input id="cam_neto" type="number" readonly tabindex="-1">
+        </div>
+      </div>
+
+      <div class="submit-area">
+        <button id="btnSubmitCamiones" class="btn-submit">Registrar viaje</button>
+        <button id="btnVolverCamiones" class="btn-secondary">← Volver</button>
+      </div>
+      <div id="msgCamiones" class="msg hidden"></div>
+    </div>
+  </div>
+
+  <!-- ── PANTALLA: Formulario Estercolero ───────────────────────────── -->
+  <div id="screenEstercolero" class="hidden">
+    <div class="card">
+      <h2>🌱 Carga de Estercolero</h2>
+      <p class="hint">Completá los datos del viaje de digestato. Los campos con <span style="color:var(--red)">*</span> son obligatorios.</p>
+
+      <div class="field">
+        <label for="est_fecha">Fecha <span class="req">*</span></label>
+        <input id="est_fecha" type="date" style="max-width:220px">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="est_localidad">Localidad <span class="req">*</span></label>
+          <select id="est_localidad">
+            <option value="">— Seleccioná localidad —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="est_campo">Campo <span class="req">*</span></label>
+          <select id="est_campo" disabled>
+            <option value="">— Primero elegí localidad —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="est_lote">Lote <span class="req">*</span></label>
+        <select id="est_lote" disabled>
+          <option value="">— Primero elegí campo —</option>
+        </select>
+      </div>
+
+      <div class="section-divider"><span>Datos del viaje</span></div>
+
+      <div class="field-row-3">
+        <div class="field">
+          <label for="est_nviajes">N° de viajes <span class="req">*</span></label>
+          <input id="est_nviajes" type="number" min="1" step="1" placeholder="15">
+        </div>
+        <div class="field">
+          <label for="est_captanque">Cap. tanque (m³) <span class="req">*</span></label>
+          <input id="est_captanque" type="number" min="0" step="0.1" placeholder="10">
+        </div>
+        <div class="field field-calc">
+          <label>Total (m³)</label>
+          <input id="est_cantm3" type="number" readonly tabindex="-1">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="est_campana">Campaña</label>
+        <input id="est_campana" type="text" placeholder="Ej: 2025/26">
+      </div>
+
+      <div class="submit-area">
+        <button id="btnSubmitEstercolero" class="btn-submit">Registrar viaje</button>
+        <button id="btnVolverEstercolero" class="btn-secondary">← Volver</button>
+      </div>
+      <div id="msgEstercolero" class="msg hidden"></div>
+    </div>
+  </div>
+
+  <!-- ── PANTALLA: Confirmación ─────────────────────────────────────── -->
+  <div id="screenConfirmacion" class="hidden">
+    <div class="confirm-icon">✅</div>
+    <h2 class="confirm-title">¡Viaje registrado!</h2>
+    <p class="confirm-text">
+      Los datos fueron guardados correctamente en el sistema BIO4.<br>
+      Podés cargar otro viaje o cerrar esta ventana.
+    </p>
+    <button id="btnNuevaCarga" class="btn-submit" style="max-width:320px;margin:0 auto;display:flex">
+      Cargar otro viaje
+    </button>
+  </div>
+
+</main>
+
+<footer>
+  <p>BIO4 — Carga Digestato &nbsp;|&nbsp; Solo personal autorizado</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

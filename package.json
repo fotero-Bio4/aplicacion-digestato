@@ -1,0 +1,11 @@
+{
+  "name": "formulario-digestato",
+  "version": "1.0.0",
+  "description": "Formulario de carga Digestato - BIO4",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@netlify/functions": "^2.0.0"
+  }
+}

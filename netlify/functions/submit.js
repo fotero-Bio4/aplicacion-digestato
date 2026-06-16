@@ -27,15 +27,22 @@ async function getToken() {
   return d.access_token;
 }
 
+function parseFirstRow(address) {
+  // address: "'GALLO '!$A$2:$J$10"  →  firstRow = 2
+  const rangePart = (address || '').split('!').pop();
+  const match = rangePart.match(/\$?[A-Z]+\$?(\d+)/);
+  return match ? parseInt(match[1]) : 1;
+}
+
 async function readSheet(token, driveId, itemId, sheet) {
   const enc = encodeURIComponent(sheet);
   const r   = await fetch(
     `${GRAPH}/drives/${driveId}/items/${itemId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
-  if (!r.ok) return [];
-  const { values = [] } = await r.json();
-  return values;
+  if (!r.ok) return { values: [], firstRow: 1 };
+  const d = await r.json();
+  return { values: d.values || [], firstRow: parseFirstRow(d.address) };
 }
 
 async function readSheetWithFormulas(token, driveId, itemId, sheet) {
@@ -44,9 +51,9 @@ async function readSheetWithFormulas(token, driveId, itemId, sheet) {
     `${GRAPH}/drives/${driveId}/items/${itemId}/workbook/worksheets/${enc}/usedRange`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
-  if (!r.ok) return { values: [], formulas: [] };
+  if (!r.ok) return { values: [], formulas: [], firstRow: 1 };
   const d = await r.json();
-  return { values: d.values || [], formulas: d.formulas || [] };
+  return { values: d.values || [], formulas: d.formulas || [], firstRow: parseFirstRow(d.address) };
 }
 
 async function getWorksheets(token, driveId, itemId) {
@@ -89,13 +96,15 @@ async function patchRange(token, driveId, itemId, sheet, addr, rowValues) {
   if (!r.ok) throw new Error(`Patch ${addr}: ${r.status} ${await r.text()}`);
 }
 
-// Dada la lista de rows leída, calcula el número Excel (1-indexed) de la siguiente fila libre
-function nextRowFromRows(rows, keyColIdx = 0) {
-  let lastDataRow = 1; // fila de headers = Excel row 1
+// Dada la lista de rows leída y el número Excel de la primera fila del usedRange,
+// calcula el número Excel (1-indexed) de la siguiente fila libre.
+// rows[0] = headers (en Excel: firstRow), rows[i] = Excel row (firstRow + i).
+function nextRowFromRows(rows, firstRow, keyColIdx = 0) {
+  let lastDataRow = firstRow; // headers en Excel row = firstRow
   for (let i = 1; i < rows.length; i++) {
     const val = rows[i][keyColIdx];
     if (val !== null && val !== undefined && val !== '' && val !== 0) {
-      lastDataRow = i + 1; // i es 0-indexed; Excel row = i+1
+      lastDataRow = firstRow + i;
     }
   }
   return lastDataRow + 1;
@@ -103,7 +112,7 @@ function nextRowFromRows(rows, keyColIdx = 0) {
 
 // ── Validar login ─────────────────────────────────────────────────────────────
 async function validateUser(token, driveId, itemId, usuario, pss) {
-  const rows = await readSheet(token, driveId, itemId, 'USUARIOS');
+  const { values: rows } = await readSheet(token, driveId, itemId, 'USUARIOS');
   const row  = rows.slice(1).find(r =>
     String(r[0] ?? '').trim().toLowerCase() === String(usuario).trim().toLowerCase() &&
     String(r[1] ?? '').trim() === String(pss).trim()
@@ -173,9 +182,9 @@ exports.handler = async (event) => {
       if (!patente) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'La patente es obligatoria.' }) };
 
       // Leer headers para conocer el ancho de la fila
-      const rows    = await readSheet(token, driveId, itemId, sheetName);
+      const { values: rows, firstRow } = await readSheet(token, driveId, itemId, sheetName);
       const nCols   = Math.max((rows[0] || []).length, 10);
-      const nextRow = nextRowFromRows(rows, 1); // col B = Mes (col A vacía)
+      const nextRow = nextRowFromRows(rows, firstRow, 1); // col B (idx 1) = Mes; col A vacía
 
       const rowData = Array(nCols).fill('');
       // col A (índice 0) se deja vacía; datos desde col B (índice 1)
@@ -192,10 +201,10 @@ exports.handler = async (event) => {
       const addr = `A${nextRow}:${colLetter(nCols)}${nextRow}`;
 
       // Leer fila destino para preservar fórmulas existentes
-      const { formulas } = await readSheetWithFormulas(token, driveId, itemId, sheetName);
-      if (formulas[nextRow - 1]) {
+      const { formulas, firstRow: fFirstRow } = await readSheetWithFormulas(token, driveId, itemId, sheetName);
+      if (formulas[nextRow - fFirstRow]) {
         for (let c = 0; c < nCols; c++) {
-          const f = formulas[nextRow - 1][c];
+          const f = formulas[nextRow - fFirstRow][c];
           if (typeof f === 'string' && f.startsWith('=') && rowData[c] === '') rowData[c] = f;
         }
       }
@@ -211,9 +220,9 @@ exports.handler = async (event) => {
 
       if (!lote) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'El lote es obligatorio.' }) };
 
-      const rows    = await readSheet(token, driveId, itemId, sheetName);
+      const { values: rows, firstRow } = await readSheet(token, driveId, itemId, sheetName);
       const nCols   = Math.max((rows[0] || []).length, 10);
-      const nextRow = nextRowFromRows(rows, 1); // col B = Mes (col A vacía)
+      const nextRow = nextRowFromRows(rows, firstRow, 1); // col B (idx 1) = Mes; col A vacía
 
       const rowData = Array(nCols).fill('');
       // col A (índice 0) se deja vacía; datos desde col B (índice 1)
@@ -229,10 +238,10 @@ exports.handler = async (event) => {
 
       const addr = `A${nextRow}:${colLetter(nCols)}${nextRow}`;
 
-      const { formulas } = await readSheetWithFormulas(token, driveId, itemId, sheetName);
-      if (formulas[nextRow - 1]) {
+      const { formulas, firstRow: fFirstRow } = await readSheetWithFormulas(token, driveId, itemId, sheetName);
+      if (formulas[nextRow - fFirstRow]) {
         for (let c = 0; c < nCols; c++) {
-          const f = formulas[nextRow - 1][c];
+          const f = formulas[nextRow - fFirstRow][c];
           if (typeof f === 'string' && f.startsWith('=') && rowData[c] === '') rowData[c] = f;
         }
       }

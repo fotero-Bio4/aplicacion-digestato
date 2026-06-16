@@ -170,6 +170,24 @@ function calcNeto() {
   document.getElementById('cam_neto').value = bruto - tara;
 }
 
+// Máscara remito: 0000-00000000
+(function () {
+  const input = document.getElementById('cam_remito');
+
+  input.addEventListener('input', () => {
+    const digits = input.value.replace(/\D/g, '').slice(0, 12);
+    input.value = digits.length > 4
+      ? digits.slice(0, 4) + '-' + digits.slice(4)
+      : digits;
+  });
+
+  input.addEventListener('blur', () => {
+    const digits = input.value.replace(/\D/g, '');
+    if (!digits) return;
+    input.value = digits.slice(0, 4).padStart(4, '0') + '-' + digits.slice(4).padStart(8, '0');
+  });
+})();
+
 // Submit camiones
 document.getElementById('btnSubmitCamiones').addEventListener('click', submitCamiones);
 
@@ -185,10 +203,13 @@ async function submitCamiones() {
   const bruto     = document.getElementById('cam_bruto').value;
   const tara      = document.getElementById('cam_tara').value;
 
+  const remito = document.getElementById('cam_remito').value.trim();
+
   if (!fecha)     { showMsg(msgEl, 'error', 'La fecha es obligatoria.'); return; }
   if (!localidad) { showMsg(msgEl, 'error', 'Seleccioná una localidad.'); return; }
   if (!campo)     { showMsg(msgEl, 'error', 'Seleccioná un campo.'); return; }
   if (!patente)   { showMsg(msgEl, 'error', 'Seleccioná la patente.'); return; }
+  if (remito && !/^\d{4}-\d{8}$/.test(remito)) { showMsg(msgEl, 'error', 'El remito debe tener el formato 0000-00000000.'); return; }
   if (!bruto)     { showMsg(msgEl, 'error', 'Ingresá el peso bruto.'); return; }
   if (!tara)      { showMsg(msgEl, 'error', 'Ingresá la tara.'); return; }
 
@@ -207,7 +228,7 @@ async function submitCamiones() {
         localidad,
         campo,
         patente,
-        remito:   document.getElementById('cam_remito').value.trim(),
+        remito,
         bruto:    Number(bruto),
         tara:     Number(tara),
         neto:     Number(bruto) - Number(tara),

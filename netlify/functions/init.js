@@ -48,6 +48,18 @@ async function readSheet(token, driveId, itemId, sheet) {
   return values;
 }
 
+async function readCell(token, driveId, itemId, sheet, address) {
+  const enc = encodeURIComponent(sheet);
+  const r   = await fetch(
+    `${GRAPH}/drives/${driveId}/items/${itemId}/workbook/worksheets/${enc}/range(address='${address}')`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!r.ok) return '';
+  const d = await r.json();
+  const v = d.values && d.values[0] && d.values[0][0];
+  return v != null ? String(v).trim() : '';
+}
+
 async function getWorksheets(token, driveId, itemId) {
   const r = await fetch(
     `${GRAPH}/drives/${driveId}/items/${itemId}/workbook/worksheets`,
@@ -95,6 +107,7 @@ exports.handler = async (event) => {
     const proveedor     = String(usrRow[0]).trim();
     const permCamiones  = String(usrRow[2] ?? '').trim().toLowerCase() === 'si';
     const permEstercol  = String(usrRow[3] ?? '').trim().toLowerCase() === 'si';
+    const captanque     = Number(usrRow[4] ?? '') || 0;
 
     // ── 2. Buscar nombres exactos de hojas ────────────────────────────────────
     const wsNames = await getWorksheets(token, driveId, itemId);
@@ -102,6 +115,8 @@ exports.handler = async (event) => {
     const sheetEstercolero = wsNames.find(n => n.trim().toUpperCase() === proveedor.toUpperCase() + ' ESTERCOLERO') || null;
 
     // ── 3. Leer Lista Desplegables ────────────────────────────────────────────
+    const campana = await readCell(token, driveId, itemId, 'Lista Desplegables', 'P3');
+
     const ldRows = await readSheet(token, driveId, itemId, 'Lista Desplegables');
     // Row 0 = section headers (INFORMACION CAMIONES / INFORMACION ESTERCOLERO)
     // Row 1 = column headers
@@ -161,7 +176,9 @@ exports.handler = async (event) => {
           permEstercol,
           sheetCamiones,
           sheetEstercolero,
+          captanque,
         },
+        campana,
         dropdowns: {
           camByLocalidad,
           patByProveedor,

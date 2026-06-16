@@ -4,8 +4,9 @@
 let session = {
   usuario:  '',
   pss:      '',
-  user:     null,   // { usr, permCamiones, permEstercol, sheetCamiones, sheetEstercolero }
+  user:     null,   // { usr, permCamiones, permEstercol, sheetCamiones, sheetEstercolero, captanque }
   dropdowns: null,  // { camByLocalidad, patByProveedor, estByLocalidad, lotByLocCampo }
+  campana:  '',     // valor de Lista Desplegables P3
   tipoActivo: null, // 'camiones' | 'estercolero'
 };
 
@@ -79,6 +80,7 @@ async function doLogin() {
     session.pss       = pss;
     session.user      = data.user;
     session.dropdowns = data.dropdowns;
+    session.campana   = data.campana || '';
 
     // Actualizar header
     document.getElementById('headerBadge').textContent = data.user.usr;
@@ -175,10 +177,20 @@ function calcNeto() {
   const input = document.getElementById('cam_remito');
 
   input.addEventListener('input', () => {
-    const digits = input.value.replace(/\D/g, '').slice(0, 12);
-    input.value = digits.length > 4
-      ? digits.slice(0, 4) + '-' + digits.slice(4)
-      : digits;
+    const raw  = input.value;
+    const hIdx = raw.indexOf('-');
+    if (hIdx >= 0) {
+      // Usuario escribió el guion manualmente — respetarlo
+      const left  = raw.slice(0, hIdx).replace(/\D/g, '').slice(0, 4);
+      const right = raw.slice(hIdx + 1).replace(/\D/g, '').slice(0, 8);
+      input.value = left + '-' + right;
+    } else {
+      // Sin guion todavía — auto-insertar tras el 4° dígito
+      const digits = raw.replace(/\D/g, '').slice(0, 12);
+      input.value  = digits.length > 4
+        ? digits.slice(0, 4) + '-' + digits.slice(4)
+        : digits;
+    }
   });
 
   input.addEventListener('blur', () => {
@@ -282,10 +294,10 @@ function initFormEstercolero() {
   const hoy = new Date().toISOString().slice(0, 10);
   document.getElementById('est_fecha').value = hoy;
 
-  document.getElementById('est_nviajes').value    = '';
-  document.getElementById('est_captanque').value  = '';
-  document.getElementById('est_cantm3').value     = '';
-  document.getElementById('est_campana').value    = '';
+  document.getElementById('est_nviajes').value   = '';
+  document.getElementById('est_captanque').value = session.user.captanque || '';
+  document.getElementById('est_campana').value   = session.campana;
+  calcM3();
   hideMsg(document.getElementById('msgEstercolero'));
 }
 
@@ -311,10 +323,8 @@ document.getElementById('est_campo').addEventListener('change', function () {
   loteSel.disabled = lotes.length === 0;
 });
 
-// Auto-cálculo cantidad m³
-['est_nviajes', 'est_captanque'].forEach(id => {
-  document.getElementById(id).addEventListener('input', calcM3);
-});
+// Auto-cálculo cantidad m³ (captanque es readonly, solo dispara nviajes)
+document.getElementById('est_nviajes').addEventListener('input', calcM3);
 function calcM3() {
   const nv = Number(document.getElementById('est_nviajes').value)   || 0;
   const ct = Number(document.getElementById('est_captanque').value) || 0;

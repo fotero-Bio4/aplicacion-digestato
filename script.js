@@ -34,6 +34,31 @@ function showMsg(el, type, text) {
 }
 function hideMsg(el) { el.classList.add('hidden'); }
 
+// ── Fecha helper ──────────────────────────────────────────────────────────────
+// Devuelve la fecha local (YYYY-MM-DD) corrida `offsetDays` días respecto a hoy.
+function fechaLocalISO(offsetDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+// Aplica el rango permitido a un input de fecha: desde hace 1 semana hasta hoy.
+function aplicarRangoFecha(inputEl) {
+  inputEl.min = fechaLocalISO(-7);
+  inputEl.max = fechaLocalISO(0);
+}
+
+// Valida que la fecha esté dentro del rango permitido (no futuro, hasta 1 semana atrás).
+// Devuelve null si es válida, o un mensaje de error.
+function validarRangoFecha(fecha) {
+  const hoy   = fechaLocalISO(0);
+  const limite = fechaLocalISO(-7);
+  if (fecha > hoy)    return 'No se pueden registrar viajes con fecha futura.';
+  if (fecha < limite) return 'Solo se pueden registrar viajes de hasta 1 semana atrás.';
+  return null;
+}
+
 // ── Dropdown helper ───────────────────────────────────────────────────────────
 function fillSelect(selectEl, options, placeholder) {
   selectEl.innerHTML = `<option value="">${placeholder}</option>`;
@@ -142,9 +167,10 @@ function initFormCamiones() {
   fillSelect(document.getElementById('cam_campo'), [], '— Primero elegí localidad —');
   document.getElementById('cam_campo').disabled = true;
 
-  // Fecha de hoy
-  const hoy = new Date().toISOString().slice(0, 10);
-  document.getElementById('cam_fecha').value = hoy;
+  // Fecha de hoy + rango permitido (hasta 1 semana atrás, sin futuro)
+  const camFecha = document.getElementById('cam_fecha');
+  aplicarRangoFecha(camFecha);
+  camFecha.value = fechaLocalISO(0);
 
   // Reset otros campos
   document.getElementById('cam_remito').value = '';
@@ -180,10 +206,10 @@ function calcNeto() {
     const raw  = input.value;
     const hIdx = raw.indexOf('-');
     if (hIdx >= 0) {
-      // Usuario escribió el guion manualmente — respetarlo
+      // Hay guion: el lado izquierdo ya está definido → completarlo con ceros a 4.
       const left  = raw.slice(0, hIdx).replace(/\D/g, '').slice(0, 4);
       const right = raw.slice(hIdx + 1).replace(/\D/g, '').slice(0, 8);
-      input.value = left + '-' + right;
+      input.value = left.padStart(4, '0') + '-' + right;
     } else {
       // Sin guion todavía — auto-insertar tras el 4° dígito
       const digits = raw.replace(/\D/g, '').slice(0, 12);
@@ -194,9 +220,12 @@ function calcNeto() {
   });
 
   input.addEventListener('blur', () => {
-    const digits = input.value.replace(/\D/g, '');
-    if (!digits) return;
-    input.value = digits.slice(0, 4).padStart(4, '0') + '-' + digits.slice(4).padStart(8, '0');
+    const raw  = input.value;
+    const hIdx = raw.indexOf('-');
+    const left  = (hIdx >= 0 ? raw.slice(0, hIdx) : raw).replace(/\D/g, '');
+    const right = (hIdx >= 0 ? raw.slice(hIdx + 1) : '').replace(/\D/g, '');
+    if (!left && !right) return;
+    input.value = left.slice(0, 4).padStart(4, '0') + '-' + right.slice(0, 8).padStart(8, '0');
   });
 })();
 
@@ -218,6 +247,8 @@ async function submitCamiones() {
   const remito = document.getElementById('cam_remito').value.trim();
 
   if (!fecha)     { showMsg(msgEl, 'error', 'La fecha es obligatoria.'); return; }
+  const errFecha = validarRangoFecha(fecha);
+  if (errFecha)   { showMsg(msgEl, 'error', errFecha); return; }
   if (!localidad) { showMsg(msgEl, 'error', 'Seleccioná una localidad.'); return; }
   if (!campo)     { showMsg(msgEl, 'error', 'Seleccioná un campo.'); return; }
   if (!patente)   { showMsg(msgEl, 'error', 'Seleccioná la patente.'); return; }
@@ -291,8 +322,9 @@ function initFormEstercolero() {
   fillSelect(document.getElementById('est_lote'), [], '— Primero elegí campo —');
   document.getElementById('est_lote').disabled = true;
 
-  const hoy = new Date().toISOString().slice(0, 10);
-  document.getElementById('est_fecha').value = hoy;
+  const estFecha = document.getElementById('est_fecha');
+  aplicarRangoFecha(estFecha);
+  estFecha.value = fechaLocalISO(0);
 
   document.getElementById('est_nviajes').value   = '';
   document.getElementById('est_captanque').value = session.user.captanque || '';
@@ -347,6 +379,8 @@ async function submitEstercolero() {
   const captanque = document.getElementById('est_captanque').value;
 
   if (!fecha)     { showMsg(msgEl, 'error', 'La fecha es obligatoria.'); return; }
+  const errFecha = validarRangoFecha(fecha);
+  if (errFecha)   { showMsg(msgEl, 'error', errFecha); return; }
   if (!localidad) { showMsg(msgEl, 'error', 'Seleccioná una localidad.'); return; }
   if (!campo)     { showMsg(msgEl, 'error', 'Seleccioná un campo.'); return; }
   if (!lote)      { showMsg(msgEl, 'error', 'Seleccioná el lote.'); return; }

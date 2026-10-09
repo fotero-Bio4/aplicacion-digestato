@@ -531,6 +531,7 @@ async function buscarDatos() {
       return;
     }
 
+    ultimaConsulta = { ...data, tipo, desde, hasta };
     renderTabla(data);
   } catch (err) {
     resEl.classList.add('hidden');
@@ -594,4 +595,62 @@ function renderTabla({ headers, rows, fechaIdx }) {
   document.getElementById('verResumen').textContent =
     `${rows.length} ${rows.length === 1 ? 'registro' : 'registros'} encontrados`;
   resEl.classList.remove('hidden');
+}
+
+// ── Descargar Excel ───────────────────────────────────────────────────────────
+let ultimaConsulta = null;   // { headers, rows, fechaIdx, tipo, desde, hasta }
+
+// Carga SheetJS bajo demanda (solo la primera vez que se descarga)
+function cargarSheetJS() {
+  if (window.XLSX) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload  = resolve;
+    s.onerror = () => reject(new Error('No se pudo cargar el generador de Excel.'));
+    document.head.appendChild(s);
+  });
+}
+
+document.getElementById('btnDescargarExcel').addEventListener('click', descargarExcel);
+
+async function descargarExcel() {
+  const btn   = document.getElementById('btnDescargarExcel');
+  const msgEl = document.getElementById('msgVerDatos');
+  if (!ultimaConsulta || !ultimaConsulta.rows.length) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generando...';
+
+  try {
+    await cargarSheetJS();
+    const { headers, rows, fechaIdx, tipo, desde, hasta } = ultimaConsulta;
+    const sumCols = headers.map(h => COLS_TOTAL.test(h.trim()));
+    const totals  = headers.map(() => 0);
+
+    // Columnas sumables como número
+    const body = rows.map(r => r.map((v, i) => {
+      if (sumCols[i]) { totals[i] += Number(v) || 0; return v === '' ? '' : Number(v); }
+      return v;
+    }));
+    const pie = headers.map((_, i) => i === 0 ? 'Total' : (sumCols[i] ? totals[i] : ''));
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...body, pie]);
+    ws['!cols'] = headers.map(h => ({ wch: Math.max(12, h.length + 2) }));
+
+    // Fecha: se deja el serial de Excel con formato de fecha (evita corrimientos por zona horaria)
+    body.forEach((r, i) => {
+      const cell = ws[XLSX.utils.encode_cell({ r: i + 1, c: fechaIdx })];
+      if (cell && cell.t === 'n') cell.z = 'dd/mm/yyyy';
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, tipo === 'camiones' ? 'Camiones' : 'Estercolero');
+    XLSX.writeFile(wb, `Digestato_${session.user.usr}_${tipo}_${desde}_a_${hasta}.xlsx`);
+  } catch (err) {
+    showMsg(msgEl, 'error', err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬇ Descargar Excel';
+  }
 }

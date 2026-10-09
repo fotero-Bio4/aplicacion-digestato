@@ -128,9 +128,13 @@ exports.handler = async (event) => {
     }
     if (hdrIdx < 0) throw new Error(`No se encontraron encabezados en la hoja ${sheetName}`);
 
-    // Columnas = las que tienen encabezado
+    // Columnas = las que tienen encabezado (en estercolero no se muestran Cap tanque ni cantidad m3)
+    const ocultas = tipo === 'estercolero' ? /^(cap\.? tanque|cantidad m3)$/i : null;
     const cols    = [];
-    rows[hdrIdx].forEach((v, c) => { const h = String(v ?? '').trim(); if (h) cols.push({ c, h }); });
+    rows[hdrIdx].forEach((v, c) => {
+      const h = String(v ?? '').trim();
+      if (h && !(ocultas && ocultas.test(h))) cols.push({ c, h });
+    });
     const headers = cols.map(x => x.h);
 
     const dMin = dateToExcel(desde);

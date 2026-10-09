@@ -335,6 +335,44 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .perm-ok  { background: var(--green-bg);  color: #2d6a10;  border: 1px solid var(--green-border); }
 .perm-no  { background: var(--red-bg);    color: var(--red); border: 1px solid var(--red-border); }
 
+/* ── Solapas ─────────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex; gap: 6px; margin-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+}
+.tab {
+  flex: 1; padding: 12px 10px; font-size: 14px; font-weight: 700;
+  background: transparent; color: var(--text-muted);
+  border: none; border-bottom: 3px solid transparent; margin-bottom: -2px;
+  cursor: pointer; font-family: inherit;
+}
+.tab:hover  { color: var(--text-sub); background: var(--accent); }
+.tab.active { color: var(--navy); border-bottom-color: var(--brand); }
+
+/* ── Ver datos ───────────────────────────────────────────────────────────── */
+.ver-resumen {
+  margin: 20px 0 8px; font-size: 13px; font-weight: 700; color: var(--text-muted);
+}
+.table-wrap {
+  overflow-x: auto; border: 1px solid var(--border); border-radius: 10px;
+  max-height: 60vh; overflow-y: auto;
+}
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th, .data-table td {
+  padding: 8px 10px; text-align: left; white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+.data-table thead th {
+  position: sticky; top: 0; background: var(--header-bg); color: #fff; font-weight: 700;
+}
+.data-table tbody tr:nth-child(even) { background: var(--card2); }
+.data-table tbody tr:hover           { background: var(--accent); }
+.data-table td.num                   { text-align: right; font-variant-numeric: tabular-nums; }
+.data-table tfoot td {
+  position: sticky; bottom: 0; background: var(--accent-hl);
+  font-weight: 800; color: var(--navy); border-bottom: none;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 500px) {
   .tipo-grid    { grid-template-columns: 1fr; }

@@ -17,11 +17,18 @@ const screens = {
   camiones:    document.getElementById('screenCamiones'),
   estercolero: document.getElementById('screenEstercolero'),
   confirmacion: document.getElementById('screenConfirmacion'),
+  verDatos:    document.getElementById('screenVerDatos'),
 };
 
 function showScreen(name) {
   Object.values(screens).forEach(s => s.classList.add('hidden'));
   screens[name].classList.remove('hidden');
+
+  // Solapas: ocultas en login; "Ver datos" activa solo en su pantalla
+  document.getElementById('tabsNav').classList.toggle('hidden', name === 'login');
+  document.getElementById('tabCargar').classList.toggle('active', name !== 'verDatos');
+  document.getElementById('tabVerDatos').classList.toggle('active', name === 'verDatos');
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -446,3 +453,145 @@ document.getElementById('btnNuevaCarga').addEventListener('click', () => {
     goToEstercolero();
   }
 });
+
+// ── SOLAPAS ───────────────────────────────────────────────────────────────────
+document.getElementById('tabCargar').addEventListener('click', () => {
+  if (!screens.verDatos.classList.contains('hidden')) {
+    document.querySelectorAll('input[name="tipo"]').forEach(r => { r.checked = false; });
+    postLogin();
+  }
+});
+document.getElementById('tabVerDatos').addEventListener('click', goToVerDatos);
+
+// ── VER DATOS ─────────────────────────────────────────────────────────────────
+let verDatosIniciado = false;
+
+function goToVerDatos() {
+  const { permCamiones, permEstercol } = session.user;
+  const tipoSel = document.getElementById('ver_tipo');
+
+  if (!verDatosIniciado) {
+    // Por defecto: desde el 1° del mes actual hasta hoy
+    const hoy = fechaLocalISO(0);
+    document.getElementById('ver_desde').value = hoy.slice(0, 8) + '01';
+    document.getElementById('ver_hasta').value = hoy;
+    tipoSel.value = permCamiones ? 'camiones' : 'estercolero';
+    verDatosIniciado = true;
+  }
+
+  // Selector de tipo solo si tiene ambos permisos
+  document.getElementById('verTipoWrap').classList.toggle('hidden', !(permCamiones && permEstercol));
+
+  showScreen('verDatos');
+  buscarDatos();
+}
+
+document.getElementById('btnBuscarDatos').addEventListener('click', buscarDatos);
+document.getElementById('ver_tipo').addEventListener('change', buscarDatos);
+
+// Serial Excel → dd/mm/yyyy
+function excelToFecha(v) {
+  if (typeof v !== 'number') return String(v ?? '');
+  const d = new Date((Math.floor(v) - 25569) * 86400000);
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`;
+}
+
+// Columnas numéricas que se suman en el pie de la tabla
+const COLS_TOTAL = /^(bruto|tara|neto|n.? ?viajes|cantidad m3)$/i;
+
+async function buscarDatos() {
+  const btn    = document.getElementById('btnBuscarDatos');
+  const msgEl  = document.getElementById('msgVerDatos');
+  const resEl  = document.getElementById('verResultado');
+  const desde  = document.getElementById('ver_desde').value;
+  const hasta  = document.getElementById('ver_hasta').value;
+  const { permCamiones, permEstercol } = session.user;
+  const tipo   = (permCamiones && permEstercol)
+    ? document.getElementById('ver_tipo').value
+    : (permCamiones ? 'camiones' : 'estercolero');
+
+  hideMsg(msgEl);
+  if (!desde || !hasta) { showMsg(msgEl, 'error', 'Completá las fechas desde y hasta.'); return; }
+  if (desde > hasta)    { showMsg(msgEl, 'error', 'La fecha desde no puede ser mayor a la fecha hasta.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Buscando...';
+
+  try {
+    const resp = await fetch('/.netlify/functions/datos', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ usuario: session.usuario, pss: session.pss, tipo, desde, hasta }),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      resEl.classList.add('hidden');
+      showMsg(msgEl, 'error', data.error || 'Error al consultar los datos.');
+      return;
+    }
+
+    renderTabla(data);
+  } catch (err) {
+    resEl.classList.add('hidden');
+    showMsg(msgEl, 'error', 'Error de conexión: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Buscar';
+  }
+}
+
+function renderTabla({ headers, rows, fechaIdx }) {
+  const tabla = document.getElementById('tablaDatos');
+  const thead = tabla.querySelector('thead');
+  const tbody = tabla.querySelector('tbody');
+  const tfoot = tabla.querySelector('tfoot');
+  const resEl = document.getElementById('verResultado');
+
+  thead.innerHTML = tbody.innerHTML = tfoot.innerHTML = '';
+
+  if (!rows.length) {
+    resEl.classList.add('hidden');
+    showMsg(document.getElementById('msgVerDatos'), 'info', 'No hay viajes cargados en el rango seleccionado.');
+    return;
+  }
+
+  const fmtNum = n => Number(n).toLocaleString('es-AR');
+  const sumCols = headers.map(h => COLS_TOTAL.test(h.trim()));
+  const totals  = headers.map(() => 0);
+
+  const trh = document.createElement('tr');
+  headers.forEach(h => { const th = document.createElement('th'); th.textContent = h; trh.appendChild(th); });
+  thead.appendChild(trh);
+
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    r.forEach((v, i) => {
+      const td = document.createElement('td');
+      if (i === fechaIdx) {
+        td.textContent = excelToFecha(v);
+      } else if (sumCols[i]) {
+        totals[i] += Number(v) || 0;
+        td.textContent = v === '' ? '' : fmtNum(v);
+        td.className = 'num';
+      } else {
+        td.textContent = v;
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  const trf = document.createElement('tr');
+  headers.forEach((_, i) => {
+    const td = document.createElement('td');
+    if (i === 0) td.textContent = 'Total';
+    else if (sumCols[i]) { td.textContent = fmtNum(totals[i]); td.className = 'num'; }
+    trf.appendChild(td);
+  });
+  tfoot.appendChild(trf);
+
+  document.getElementById('verResumen').textContent =
+    `${rows.length} ${rows.length === 1 ? 'registro' : 'registros'} encontrados`;
+  resEl.classList.remove('hidden');
+}

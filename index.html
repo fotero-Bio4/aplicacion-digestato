@@ -20,6 +20,12 @@
 
 <main>
 
+  <!-- ── Solapas (visibles una vez logueado) ────────────────────────── -->
+  <nav id="tabsNav" class="tabs hidden">
+    <button id="tabCargar" class="tab active" type="button">Cargar datos</button>
+    <button id="tabVerDatos" class="tab" type="button">Ver datos</button>
+  </nav>
+
   <!-- ── PANTALLA: Login ──────────────────────────────────────────────── -->
   <div id="screenLogin" class="login-wrap">
     <div class="card">
@@ -193,6 +199,49 @@
         <button id="btnVolverEstercolero" class="btn-secondary">← Volver</button>
       </div>
       <div id="msgEstercolero" class="msg hidden"></div>
+    </div>
+  </div>
+
+  <!-- ── PANTALLA: Ver datos ────────────────────────────────────────── -->
+  <div id="screenVerDatos" class="hidden">
+    <div class="card">
+      <h2>📋 Ver datos</h2>
+      <p class="hint">Consultá los viajes que cargaste. Elegí el rango de fechas y presioná Buscar.</p>
+
+      <div id="verTipoWrap" class="field hidden">
+        <label for="ver_tipo">Tipo de carga</label>
+        <select id="ver_tipo">
+          <option value="camiones">🚛 Camiones</option>
+          <option value="estercolero">🌱 Estercolero</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="ver_desde">Desde <span class="req">*</span></label>
+          <input id="ver_desde" type="date">
+        </div>
+        <div class="field">
+          <label for="ver_hasta">Hasta <span class="req">*</span></label>
+          <input id="ver_hasta" type="date">
+        </div>
+      </div>
+
+      <div class="submit-area">
+        <button id="btnBuscarDatos" class="btn-submit">Buscar</button>
+      </div>
+      <div id="msgVerDatos" class="msg hidden"></div>
+
+      <div id="verResultado" class="hidden">
+        <div id="verResumen" class="ver-resumen"></div>
+        <div class="table-wrap">
+          <table class="data-table" id="tablaDatos">
+            <thead></thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
